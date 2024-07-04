@@ -1,0 +1,13 @@
+version: '3'
+services:
+  actual_server:
+    image: docker.io/actualbudget/actual-server:latest
+    ports:
+      - '5006:5006'
+    environment:
+       - ACTUAL_UPLOAD_FILE_SYNC_SIZE_LIMIT_MB={ACTUAL_UPLOAD_FILE_SYNC_SIZE_LIMIT_MB}
+       - ACTUAL_UPLOAD_SYNC_ENCRYPTED_FILE_SYNC_SIZE_LIMIT_MB={ACTUAL_UPLOAD_SYNC_ENCRYPTED_FILE_SYNC_SIZE_LIMIT_MB}
+       - ACTUAL_UPLOAD_FILE_SIZE_LIMIT_MB={ACTUAL_UPLOAD_FILE_SIZE_LIMIT_MB}
+    volumes:
+      - ./actual-data:/data
+    restart: unless-stopped
