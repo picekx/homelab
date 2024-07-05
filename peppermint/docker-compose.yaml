@@ -10,9 +10,9 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: peppermint
-      POSTGRES_PASSWORD: wudncjwdnclwdnc
-      POSTGRES_DB: peppermint
+      POSTGRES_USER: {POSTGRES_USER}
+      POSTGRES_PASSWORD: {POSTGRES_PASSWORD}
+      POSTGRES_DB: {POSTGRES_DB}
  
   peppermint:
     container_name: peppermint
@@ -29,11 +29,11 @@ services:
       timeout: 10s
       retries: 3
     environment:
-      DB_USERNAME: "peppermint"
-      DB_PASSWORD: "wudncjwdnclwdnc"
-      DB_HOST: "peppermint_postgres"
-      SECRET: 'wdojncpwdcnwopdecndkw'
-      API_URL: "http://192.168.1.64:5003"
+      DB_USERNAME: {DB_USERNAME}
+      DB_PASSWORD: {DB_PASSWORD}
+      DB_HOST: {DB_HOST}
+      SECRET: {SECRET}
+      API_URL: {API_URL}
  
 volumes:
  pgdata:
