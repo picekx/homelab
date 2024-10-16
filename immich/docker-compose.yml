@@ -1,0 +1,73 @@
+services:
+  immich-server:
+    container_name: immich-server
+    image: ghcr.io/immich-app/immich-server:v1.117.0
+    ports:
+      - 2283:3001
+    volumes:
+      - immich_upload:/usr/src/app/upload
+    environment:
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE_NAME: ${DB_DATABASE_NAME}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOSTNAME: ${REDIS_HOSTNAME}
+      IMMICH_MACHINE_LEARNING_URL: ${IMMICH_MACHINE_LEARNING_URL}
+    depends_on:
+      - redis
+      - database
+    restart: always
+    networks:
+      - immich-network
+
+  immich-machine-learning:
+    container_name: immich-machine-learning 
+    image: ghcr.io/immich-app/immich-machine-learning:v1.117.0 
+    volumes: 
+      - immich_cache:/cache
+    environment: 
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE_NAME: ${DB_DATABASE_NAME}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOSTNAME: ${REDIS_HOSTNAME}
+    restart: always 
+    networks:
+      - immich-network
+
+
+  redis:
+    container_name: immich-redis
+    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
+    restart: always
+    networks:
+      - immich-network
+
+  database:
+    container_name: immich-postgres
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PG_DATA: /var/lib/postgresql/data
+    volumes:
+      - immich_postgres:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - immich-network
+
+
+networks:
+  immich-network:
+    driver: bridge
+
+volumes:
+  immich_cache:
+    driver: local
+  immich_upload:
+    driver: local
+  immich_postgres:
+    driver: local

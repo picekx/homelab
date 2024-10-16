@@ -1,1 +1,1 @@
-# homelab
+# HomeLab - Personal Server Setup

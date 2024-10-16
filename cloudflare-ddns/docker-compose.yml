@@ -1,0 +1,15 @@
+version: '3.9'
+services:
+  cloudflare-ddns:
+    image: timothyjmiller/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    security_opt:
+      - no-new-privileges:true
+    network_mode: 'host'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /home/piotr/cloudflare-ddns/config.json:/config.json
+    restart: unless-stopped

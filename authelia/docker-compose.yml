@@ -1,0 +1,13 @@
+version: '3.3'
+    
+services:
+ authelia:
+    container_name: authelia
+    image: authelia/authelia
+    restart: unless-stopped
+    ports:
+      - 9091:9091
+    volumes:
+      - /home/piotr/authelia/data/config:/config
+    environment:
+      - TZ=${TZ}
