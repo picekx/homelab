@@ -1,0 +1,115 @@
+networks:
+  affine-traefik:
+    name: affine-traefik
+    driver: bridge
+  affine:
+    name: affine
+    driver: bridge
+
+    
+x-common-keys-core: &common-keys-core
+  security_opt:
+    - no-new-privileges:true
+    - apparmor=docker-default
+  restart: unless-stopped
+
+services:
+  affine:
+    <<: *common-keys-core
+    image: ghcr.io/toeverything/affine-graphql:stable
+    container_name: affine
+    restart: unless-stopped
+    volumes:
+      - /home/piotr/affine/storage:/root/.affine/storage
+      - /home/piotr/affine/config:/root/.affine/config
+      #- /home/piotr/affine/affine.js:/app/dist/config/affine.js:ro
+    networks:
+      - affine-traefik
+      - affine
+      
+    ports:
+      - 3010:3010
+    depends_on:
+      affine-redis:
+        condition: service_healthy
+      affine-db:
+        condition: service_healthy
+      affine-migration:
+        condition: service_completed_successfully
+    environment:
+      # Generic settings
+      PORT: 3010
+      DB_DATA_LOCATION: "~/.affine/self-host/postgres/pgdata"
+      UPLOAD_LOCATION: "~/.affine/self-host/storage"
+      CONFIG_LOCATION: "~/.affine/self-host/config"
+      # Database
+      DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@affine-db:5455/${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      # Redis
+      REDIS_SERVER_HOST: affine-redis
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.affine-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.affine-http.entrypoints=web
+      - 'traefik.http.routers.affine-https.entrypoints=websecure'    
+      - 'traefik.http.routers.affine-https.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.routers.affine-https.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.affine-https.tls=true'
+      - 'traefik.docker.network=affine-traefik'
+
+  affine-migration:
+    image: ghcr.io/toeverything/affine-graphql:${AFFINE_REVISION:-stable}
+    container_name: affine-migration
+    networks:
+      - affine
+    volumes:
+      # custom configurations
+      - /home/piotr/affine/storage:/root/.affine/storage
+      - /home/piotr/affine/config:/root/.affine/config
+    command: ['sh', '-c', 'node ./scripts/self-host-predeploy.js']
+    environment:
+      REDIS_SERVER_HOST: affine-redis
+      DATABASE_URL: postgresql://${DB_USERNAME}:${DB_PASSWORD}@affine-db:5455/${DB_DATABASE}
+    depends_on:
+      affine-db:
+        condition: service_healthy
+      affine-redis:
+        condition: service_healthy
+
+  affine-redis:
+    <<: *common-keys-core
+    image: redis:6.2-alpine
+    container_name: affine-redis
+    networks:
+      - affine
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    restart: unless-stopped
+
+  affine-db:
+    <<: *common-keys-core
+    image: postgres:16.4-alpine
+    container_name: affine-db
+    networks:
+      - affine
+    volumes:
+      - /home/piotr/affine/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+      PGPORT: 5455
+    healthcheck:
+      test:
+        ['CMD', 'pg_isready', '-U', "${DB_USERNAME}", '-d', "${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped

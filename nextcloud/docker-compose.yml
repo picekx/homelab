@@ -3,7 +3,9 @@ volumes:
   nextcloud-db:
 
 networks:
-  frontend:
+  nextcloud-traefik:
+    driver: bridge
+    name: nextcloud-traefik
   backend:
 
 services:
@@ -20,8 +22,30 @@ services:
       - MYSQL_HOST=${MYSQL_HOST}
       - OVERWRITEPROTOCOL=${OVERWRITEPROTOCOL}
       - maintenance_window_start=${maintenance_window_start}
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=nextcloud-traefik'
+      #middlewares v2
+      - "traefik.http.middlewares.nc-rep.redirectregex.regex=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.http.middlewares.nc-rep.redirectregex.replacement=https://$$1/remote.php/dav/"
+      - "traefik.http.middlewares.nc-rep.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nc-header.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.nc-header.headers.customResponseHeaders.Strict-Transport-Security=15552000"
+      #http
+      - 'traefik.http.routers.nextcloud-http.entrypoints=web'
+     # - 'traefik.http.routers.nextcloud-http.middlewares=redirect-to-https'
+      - 'traefik.http.routers.nextcloud-http.rule=Host(`${DOMAIN=}`)'
+      #https
+      - 'traefik.http.routers.nextcloud.entrypoints=websecure'
+      - 'traefik.http.routers.nextcloud.middlewares=nc-rep,nc-header'      
+      - 'traefik.http.routers.nextcloud.rule=Host(`${DOMAIN=}`)'
+      - 'traefik.http.routers.nextcloud.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.nextcloud.tls=true'
+      - 'traefik.http.routers.nextcloud.service=nextcloud'
+      - 'traefik.http.services.nextcloud.loadbalancer.server.port=80'
+      - 'traefik.http.services.nextcloud.loadbalancer.passHostHeader=true'
     networks:
-      - frontend
+      - nextcloud-traefik
       - backend
 
   nextcloud-db:
