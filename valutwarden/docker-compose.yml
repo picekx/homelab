@@ -19,3 +19,17 @@ services:
      - SMTP_PASSWORD=${SMTP_PASSWORD}
      - DOMAIN=${DOMAIN}
      - TZ=${TZ}
+    networks:
+      - front
+      
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.valut-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.valut-http.entrypoints=web
+      - 'traefik.http.routers.valut-https.entrypoints=websecure'    
+      - 'traefik.http.routers.valut-https.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.routers.valut-https.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.valut-https.tls=true'
+networks:
+  front:
+    external: true

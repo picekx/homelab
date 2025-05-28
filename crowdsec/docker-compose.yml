@@ -1,0 +1,35 @@
+networks:
+  crowdsec-traefik:
+    name: crowdsec-traefik
+    driver: bridge
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    environment:
+      GID: "${GID-1000}"
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/traefik"
+    volumes:
+      - /home/piotr/crowdsec/acquis.yaml:/etc/crowdsec/acquis.yaml
+      - /home/piotr/crowdsec/db:/var/lib/crowdsec/data/
+      - /home/piotr/crowdsec/config:/etc/crowdsec/
+      - /home/piotr/traefik/config/logs:/var/log/traefik/:ro
+    networks:
+      - crowdsec-traefik
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  bouncer-traefik:
+    image: docker.io/fbonalair/traefik-crowdsec-bouncer:latest
+    container_name: bouncer-traefik
+    environment:
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY}
+      CROWDSEC_AGENT_HOST: crowdsec:8080
+    networks:
+      - crowdsec-traefik
+    depends_on:
+      - crowdsec
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true

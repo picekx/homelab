@@ -1,0 +1,18 @@
+services:
+  diun:
+    image: ghcr.io/crazy-max/diun:latest
+    container_name: diun
+    restart: unless-stopped
+    command: serve
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/piotr/diun/diun-data:/data
+    environment:
+      - TZ=Europe/Warsaw
+      - LOG_LEVEL=info
+      - DIUN_WATCH_WORKERS=10
+      - DIUN_WATCH_SCHEDULE=0 * * * *
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_NOTIF_TELEGRAM_TOKEN=${DIUN_NOTIF_TELEGRAM_TOKEN}
+      - DIUN_NOTIF_TELEGRAM_CHATIDS=${DIUN_NOTIF_TELEGRAM_CHATIDS}
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true

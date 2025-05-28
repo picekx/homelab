@@ -1,4 +1,11 @@
 version: "3.4"
+networks:
+  paperless:
+    driver: bridge
+    name: paperless
+  paperless-traefik:
+    driver: bridge
+    name: paperless-traefik
 services:
   broker:
     image: docker.io/library/redis:7
@@ -7,6 +14,7 @@ services:
       - redisdata:/data
     networks:
       - paperless
+
 
   db:
     image: docker.io/library/postgres:15
@@ -44,8 +52,6 @@ services:
       USERMAP_GID: ${USERMAP_GID}
       PAPERLESS_URL: ${PAPERLESS_URL}
       PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
-      PAPERLESS_APPS: ${PAPERLESS_APPS}
-      PAPERLESS_SOCIALACCOUNT_PROVIDERS: ${PAPERLESS_SOCIALACCOUNT_PROVIDER}
       TZ: ${TZ}
     labels:
       - traefik.enable=true
@@ -57,13 +63,7 @@ services:
       - 'traefik.http.routers.docs-https.tls=true'
       - 'traefik.docker.network=paperless-traefik'
 
-networks:
-  paperless:
-    driver: bridge
-    name: paperless
-  paperless-traefik:
-    driver: bridge
-    name: paperless-traefik
+
 volumes:
   data:
   media:

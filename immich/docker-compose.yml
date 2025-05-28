@@ -2,7 +2,7 @@ services:
   # Main Immich Server service configuration
   immich-server:
     container_name: immich-server # Name of the running container
-    image: ghcr.io/immich-app/immich-server:v1.123.0 # Image to be used
+    image: ghcr.io/immich-app/immich-server:v1.133.1 # Image to be used
     #ports: # Mapping ports from the host OS to the container
      # - 2283:2283
     expose:
@@ -11,13 +11,13 @@ services:
     volumes: # Mounting directories for persistent data storage
       - immich_upload:/usr/src/app/upload
     environment: # Setting environment variables
-      DB_HOSTNAME: ${DB_HOSTNAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE_NAME: ${DB_DATABASE_NAME}
-      DB_PORT: ${DB_PORT}
-      REDIS_HOSTNAME: ${REDIS_HOSTNAME}
-      IMMICH_MACHINE_LEARNING_URL: ${IMMICH_MACHINE_LEARNING_URL}
+      DB_HOSTNAME: immich-postgres
+      DB_USERNAME: immich
+      DB_PASSWORD: arnppogGlk8G1L
+      DB_DATABASE_NAME: immich
+      DB_PORT: 5442
+      REDIS_HOSTNAME: immich-redis
+      IMMICH_MACHINE_LEARNING_URL: http://immich-machine-learning:3003
     depends_on: # Dependencies to ensure the order of service startup
       - redis
       - database
@@ -30,7 +30,6 @@ services:
       - 'traefik.http.routers.immich-https.rule=Host(`${DOMAIN}`)'
       - 'traefik.http.routers.immich-https.tls.certresolver=cloudflare'
       - 'traefik.http.routers.immich-https.tls=true'
-      - 'traefik.docker.network=immich-traefik'
     networks:
       - immich-network
       - immich-traefik
@@ -38,7 +37,7 @@ services:
   # Configuration for Immich Machine Learning service
   immich-machine-learning:
     container_name: immich-machine-learning # Name of the running container
-    image: ghcr.io/immich-app/immich-machine-learning:v1.123.0 # Image to be used
+    image: ghcr.io/immich-app/immich-machine-learning:v1.133.1 # Image to be used
     volumes: # Mounting directories for persistent data storage
       - immich_cache:/cache
     environment: # Setting environment variables
@@ -47,7 +46,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE_NAME: ${DB_DATABASE_NAME}
       DB_PORT: ${DB_PORT}
-      REDIS_HOSTNAME: ${REDIS_HOSTNAME }
+      REDIS_HOSTNAME: ${REDIS_HOSTNAME}
     restart: always # Policy to always restart the container if it stops
     networks:
       - immich-network
@@ -63,12 +62,12 @@ services:
   # Configuration for Database service
   database:
     container_name: immich-postgres # Name of the running container
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0 # Image to be used
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0 # Image to be used
     environment: # Setting environment variables
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
-      PG_DATA: ${PG_DATA}
+      PG_DATA: /var/lib/postgresql/data
       PGPORT: ${PGPORT}
     volumes: # Mounting directories for persistent data storage
       - immich_postgres:/var/lib/postgresql/data

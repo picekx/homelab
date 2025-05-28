@@ -1,0 +1,26 @@
+networks:
+  freshrss-traefik:
+    name: freshrss-traefik
+    driver: bridge
+services:
+  freshrss:
+    image: lscr.io/linuxserver/freshrss:latest
+    container_name: freshrss
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Warsaw
+    volumes:
+      - /home/piotr/freshrss/config:/config
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=freshrss-traefik'
+      - traefik.http.routers.freshrss-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.freshrss-http.entrypoints=web
+      - 'traefik.http.routers.freshrss-https.entrypoints=websecure'    
+      - 'traefik.http.routers.freshrss-https.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.routers.freshrss-https.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.freshrss-https.tls=true'
+
+    networks:
+      - freshrss-traefik

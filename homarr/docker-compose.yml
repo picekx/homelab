@@ -1,0 +1,27 @@
+networks:
+  homer-traefik:
+    name: homer-traefik
+    driver: bridge
+services:
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Optional, only if you want docker integration
+      - /home/piotr/homarr/appdata:/appdata
+    environment:
+       - SECRET_ENCRYPTION_KEY=34a4681b31b5bae60e2ee22cc19b75c7523875965e1d1cae1f89c6a8d62de175
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=homer-traefik'
+      - traefik.http.routers.homarr-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.homarr-http.entrypoints=web
+      - 'traefik.http.routers.homarr-https.entrypoints=websecure'    
+      - 'traefik.http.routers.homarr-https.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.routers.homarr-https.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.homarr-https.tls=true'
+    networks:
+      - homer-traefik
+    ports:
+      - '7575:7575'

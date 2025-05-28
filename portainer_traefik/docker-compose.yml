@@ -1,0 +1,144 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:2.25.1
+    container_name: portainer
+    restart: always
+    command: -H unix:///var/run/docker.sock
+    ports:
+     #- "9200:9000"
+    - "9443:9443"
+    #expose:
+    # -  9443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    # #labels:
+    #   #- traefik.enable=true
+    #   #- traefik.http.routers.portainer-http.rule=Host(`portainer.mycld.pl`)
+    #   #- traefik.http.routers.portainer-http.entrypoints=web
+    #   #- 'traefik.http.routers.portainer-https.entrypoints=websecure'
+    #   #- 'traefik.http.routers.portainer-https.rule=Host(`portainer.mycld.pl`)'
+    #   #- 'traefik.http.routers.portainer-https.tls.certresolver=cloudflare'
+    #   #- 'traefik.http.routers.portainer-https.tls=true'
+    #   #- traefik.http.services.portainer-https.loadbalancer.server.port=9000
+    #   #- "traefik.http.routers.edge.rule=Host(`portainer.mycld.pl`)"
+    #   #- "traefik.http.routers.edge.entrypoints=websecure"
+    #   #- "traefik.http.services.edge.loadbalancer.server.port=8000"
+    #   #- "traefik.http.routers.edge.service=edge"
+    #   #- "traefik.http.routers.edge.tls.certresolver=cloudflare"
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.docker.network=frontend
+    #   - traefik.http.routers.portainer.entrypoints=web,websecure
+    #   - traefik.http.routers.portainer.rule=Host(`portainer.mycld.pl`)
+    #   - traefik.http.services.portainer.loadbalancer.server.port=9000
+    labels:
+     # Frontend
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`portainer.mycld.pl`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.services.frontend.loadbalancer.server.port=9000"
+      - "traefik.http.routers.frontend.service=frontend"
+      - "traefik.http.routers.frontend.tls.certresolver=cloudflare"
+
+      # Edge
+      - "traefik.http.routers.edge.rule=Host(`edge.mycld.pl`)"
+      - "traefik.http.routers.edge.entrypoints=websecure"
+      - "traefik.http.services.edge.loadbalancer.server.port=8000"
+      - "traefik.http.routers.edge.service=edge"
+      - "traefik.http.routers.edge.tls.certresolver=cloudflare"
+    networks:
+      - front
+  traefik:
+    image: docker.io/library/traefik:v3.2.1
+    container_name: traefik
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /run/docker.sock:/run/docker.sock:ro
+      - /home/piotr/traefik/config/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - /home/piotr/traefik/config/config.yaml:/etc/traefik/config.yaml:ro
+      - /home/piotr/traefik/config/externalservice.yaml:/etc/traefik/externalservice.yaml:ro
+      - /home/piotr/traefik/data/certs/:/var/traefik/certs/:rw
+      - /home/piotr/traefik/config/logs:/var/log/traefik/:rw
+    command:
+      - "--entrypoints.web.forwardedHeaders.insecure=true"
+      - "--entrypoints.websecure.forwardedHeaders.insecure=true"
+    labels:
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    environment:
+      - CF_DNS_API_TOKEN=uvNQtmDZALSLfuGhFCdhxfDyG--iuenLC03JuAUZ
+    networks:
+      - front
+      - affine-traefik
+      - immich-traefik
+      - nextcloud-traefik
+      - paperless-traefik
+      - n8n-traefik
+      - timetagger-traefik
+      - keycloak-traefik
+      - crowdsec-traefik
+      - freshrss-traefik
+      - linkwarden-traefik
+      - vikunja-traefik
+      - homer-traefik
+    restart: unless-stopped
+volumes:
+  portainer_data:
+    external: true
+networks:
+  front:
+    external: true
+  affine-traefik:
+    driver: bridge
+    name: affine-traefik
+    external: true
+  immich-traefik:
+    driver: bridge
+    name: immich-traefik
+    external: true
+  nextcloud-traefik:
+    driver: bridge
+    name: nextcloud-traefik
+    external: true
+  paperless-traefik:
+    driver: bridge
+    name: paperless-traefik
+    external: true
+  n8n-traefik:
+    driver: bridge
+    name: n8n-traefik
+    external: true
+  timetagger-traefik:
+    driver: bridge
+    name: timetagger-traefik
+    external: true
+  keycloak-traefik:
+    driver: bridge
+    name: keycloak-traefik
+    external: true
+  crowdsec-traefik:
+    name: crowdsec-traefik
+    driver: bridge
+    external: true 
+  freshrss-traefik:
+    name: freshrss-traefik
+    driver: bridge
+    external: true
+  linkwarden-traefik:
+    name: linkwarden-traefik
+    driver: bridge
+    external: true
+  vikunja-traefik:
+    name: vikunja-traefik
+    driver: bridge
+    external: true
+  homer-traefik:
+    name: homer-traefik
+    driver: bridge
+    external: true
